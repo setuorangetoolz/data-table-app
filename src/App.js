@@ -1,10 +1,13 @@
 import './App.css';
+import HomePage from "./Components/HomePage";
+import { Provider } from 'react-redux'
+import store from "./Components/features/store";
 
 function App() {
   return (
-    <div className="App">
-      hello world
-    </div>
+      <Provider store={store}>
+        <HomePage/>
+      </Provider>
   );
 }
 

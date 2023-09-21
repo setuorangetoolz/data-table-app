@@ -19,8 +19,9 @@ import {
     Typography
 } from "@mui/material";
 import {DesignationOptions} from "./ContactConstant";
-import {addContact} from "./features/contacts/ContactSlice";
-import {useDispatch} from "react-redux";
+import {addContact, editContact} from "./features/contacts/ContactSlice";
+import {useDispatch, useSelector} from "react-redux";
+import {SelectAllContacts} from "./features/contacts/ContactSelector";
 // import {useDispatch, useSelector} from "react-redux";
 
 const FieldLabel = styled(InputLabel)(({theme})=>({
@@ -39,32 +40,39 @@ const style = {
 ,    boxShadow: 24,
 };
 
-export interface FormValues {
+export interface contactValueInterface {
     first_name: string;
     last_name: string;
     phone: string;
     email: string;
-    id: string;
+    age: number;
     designation: string;
     gender: string;
     expertise: string[];
 }
 
-const initialFormValues: FormValues = {
+const initialContactValues: contactValueInterface = {
     first_name: "",
     last_name: "",
     phone: "",
     email: "",
-    id: "",
+    age:0,
     designation: "",
     gender: "",
     expertise: []
 };
 
+interface ModalInterface {
+    onClose ?: ()=>void
+    contactId ?: number;
+    setOpen :  React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-const AddOrEditModal:React.FC = () => {
+const AddOrEditModal:React.FC<ModalInterface> = ({onClose,contactId,setOpen,}) => {
     const dispatch = useDispatch()
-    const [value, setValue] = React.useState<FormValues>(initialFormValues);
+  const contacts = useSelector(SelectAllContacts);
+    const contactValue = contacts.find((contact,index)=> index + 1 === contactId)
+    const [value, setValue] = React.useState<contactValueInterface>(contactValue ? contactValue : initialContactValues);
 
     const handleChange = (event: ChangeEvent<HTMLInputElement | EventTarget>) => {
         const {name,value:inputValue,type,checked} = event.target as HTMLInputElement
@@ -95,10 +103,19 @@ const AddOrEditModal:React.FC = () => {
         }));
     };
 
+    const handleSave = (contact:any) => {
+        if (contactValue) {
+            dispatch(editContact(contact));// Dispatch the updateContact action
+        } else {
+            dispatch(addContact(contact)) // Dispatch the createContact action
+        }
+        setOpen(false);
+    };
+
     return (
         <Box sx={style}>
             <Box p={3}>
-                <Typography variant={"h6"}>Create Contact</Typography>
+                <Typography variant={"h6"}>{contactValue ? "Update Contact" : "Create Contact"}</Typography>
             </Box>
             <Divider light/>
             <Box p={3}>
@@ -129,8 +146,8 @@ const AddOrEditModal:React.FC = () => {
                     </Grid>
                     <Grid item xs={6}>
                         <FormControl fullWidth required>
-                            <FieldLabel>id</FieldLabel>
-                            <TextField type="number" name="id" value={value.id} onChange={handleChange} />
+                            <FieldLabel>Age</FieldLabel>
+                            <TextField type="number" name="age" value={value.age} onChange={handleChange} />
                         </FormControl>
                     </Grid>
                     <Grid item xs={6}>
@@ -138,7 +155,7 @@ const AddOrEditModal:React.FC = () => {
                             <FieldLabel>Designation</FieldLabel>
                             <Select name="designation" value={value.designation} onChange={handleSelectChange}>
                                 {DesignationOptions?.map((option) => (
-                                    <MenuItem key={option.value} value={option.value}>
+                                    <MenuItem key={option.value} value={option.title}>
                                         {option.title}
                                     </MenuItem>
                                 ))}
@@ -204,8 +221,8 @@ const AddOrEditModal:React.FC = () => {
             </Box>
             <Divider light/>
             <Stack direction={"row"} alignItems={"center"} justifyContent={"flex-end"} spacing={2} p={3}>
-                <Button>Cancel</Button>
-                <Button variant={"contained"} onClick={() =>dispatch(addContact(value))}>Save</Button>
+                <Button onClick={onClose}>Cancel</Button>
+                <Button variant={"contained"} onClick={() => handleSave(value)}>{contactValue ? "Update" :"Save"}</Button>
             </Stack>
         </Box>
     );

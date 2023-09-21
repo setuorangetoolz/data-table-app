@@ -1,8 +1,11 @@
-import React, {useState} from 'react';
+import React, {ChangeEvent, useState} from 'react';
 import {
     Box,
-    Button, Checkbox,
-    Divider, IconButton, Modal,
+    Button,
+    Checkbox,
+    Divider,
+    IconButton,
+    Modal,
     Paper,
     Stack,
     Table,
@@ -14,20 +17,50 @@ import {
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import AddOrEditModal from "./AddOrEditModal";
-import {useSelector} from "react-redux";
+import AddOrEditModal, {contactValueInterface} from "./AddOrEditModal";
+import {useDispatch, useSelector} from "react-redux";
 import {SelectAllContacts} from "./features/contacts/ContactSelector";
+import {deleteContact, editContact} from "./features/contacts/ContactSlice";
 
 const HomePage = () => {
+    const dispatch = useDispatch()
     const contacts = useSelector(SelectAllContacts);
     const [open,setOpen] = useState(false);
+    const [contactId, setContactId] = useState<number>()
+    const [searchContact, setSearchContact] = useState<string>("");
+
+    const handelSearchContact = (event:ChangeEvent<HTMLInputElement>) =>{
+        setSearchContact(event.target.value)
+    }
+    console.log(searchContact);
+
     const handelClick = () =>{
+        if(!open){
+            setContactId(undefined);
+        }
         setOpen(open=>!open)
     }
+    const handleDelete = (contactId:number) =>{
+        dispatch(deleteContact(contactId))
+    }
+
+    const handleEdit = (contactId:number) =>{
+        handelClick()
+       setContactId(contactId);
+    }
+
+    const filterContacts = () =>{
+        return contacts.filter((contact) =>
+            contact.first_name.toLowerCase().includes(searchContact.toLowerCase())
+        );
+    }
+
+    const filterContactList = filterContacts();
+
     return (
         <Box>
             <Stack direction={"row"} justifyContent={"space-between"} alignItems={"center"} p={2}>
-                <TextField size={"small"} placeholder={"search..."} />
+                <TextField size={"small"} type={"text"} placeholder={"search..."} value={searchContact} onChange={handelSearchContact} />
                 <Button variant={"contained"} onClick={handelClick}>Create Contact</Button>
             </Stack>
             <Divider light/>
@@ -37,13 +70,13 @@ const HomePage = () => {
                     <TableHead>
                         <TableRow>
                             <TableCell>
-                                <Checkbox size={"small"} color={"secondary"}/>
+                                <Checkbox size={"small"} />
                             </TableCell>
                             <TableCell>First Name</TableCell>
                             <TableCell>Last Name</TableCell>
                             <TableCell>Phone</TableCell>
                             <TableCell>Email</TableCell>
-                            <TableCell>Id</TableCell>
+                            <TableCell>Age</TableCell>
                             <TableCell>Designation</TableCell>
                             <TableCell>Gender</TableCell>
                             <TableCell>Expertise</TableCell>
@@ -52,39 +85,69 @@ const HomePage = () => {
                     </TableHead>
 
                     <TableBody>
-                        {contacts && contacts.map((contact,index)=>{
-                            return(
-                                <TableRow>
+                        {searchContact !== "" ?
+                            filterContactList?.map((contact,index)=> {
+                            const contactId = index + 1;
+                            return (
+                                <TableRow key={index}>
                                     <TableCell>
-                                        <Checkbox size={"small"} color={"secondary"}/>
+                                        <Checkbox size={"small"}/>
                                     </TableCell>
                                     <TableCell>{contact.first_name}</TableCell>
                                     <TableCell>{contact.last_name}</TableCell>
                                     <TableCell>{contact.phone}</TableCell>
                                     <TableCell>{contact.email}</TableCell>
-                                    <TableCell>{contact.id}</TableCell>
+                                    <TableCell>{contact.age}</TableCell>
                                     <TableCell>{contact.designation}</TableCell>
                                     <TableCell>{contact.gender}</TableCell>
                                     <TableCell>{contact.expertise.join(',')}</TableCell>
                                     <TableCell>
-                                        <IconButton size={"small"}>
+                                        <IconButton size={"small"} onClick={() => handleEdit(contactId)}>
                                             <EditIcon/>
                                         </IconButton>
-                                        <IconButton size={"small"}>
+                                        <IconButton size={"small"} onClick={() => handleDelete(contactId)}>
                                             <DeleteIcon/>
                                         </IconButton>
                                     </TableCell>
                                 </TableRow>
                             )
                         })
+                        :
+                            contacts.map((contact,index)=> {
+                                const contactId = index + 1;
+                                return (
+                                    <TableRow key={index}>
+                                        <TableCell>
+                                            <Checkbox size={"small"}/>
+                                        </TableCell>
+                                        <TableCell>{contact.first_name}</TableCell>
+                                        <TableCell>{contact.last_name}</TableCell>
+                                        <TableCell>{contact.phone}</TableCell>
+                                        <TableCell>{contact.email}</TableCell>
+                                        <TableCell>{contact.age}</TableCell>
+                                        <TableCell>{contact.designation}</TableCell>
+                                        <TableCell>{contact.gender}</TableCell>
+                                        <TableCell>{contact.expertise.join(',')}</TableCell>
+                                        <TableCell>
+                                            <IconButton size={"small"} onClick={() => handleEdit(contactId)}>
+                                                <EditIcon/>
+                                            </IconButton>
+                                            <IconButton size={"small"} onClick={() => handleDelete(contactId)}>
+                                                <DeleteIcon/>
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })
                         }
+
 
                     </TableBody>
                 </Table>
             </Paper>
             </Box>
             <Modal open={open} onClose={handelClick}>
-                <AddOrEditModal/>
+                <AddOrEditModal setOpen={setOpen} onClose={handelClick} contactId={contactId} />
             </Modal>
         </Box>
     );

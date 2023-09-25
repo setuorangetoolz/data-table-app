@@ -11,7 +11,7 @@ import {
     Table,
     TableBody,
     TableCell,
-    TableHead,
+    TableHead, TablePagination,
     TableRow,
     TextField
 } from "@mui/material";
@@ -28,6 +28,23 @@ const HomePage = () => {
     const [open,setOpen] = useState(false);
     const [contactId, setContactId] = useState<number>()
     const [searchContact, setSearchContact] = useState<string>("");
+    const [page, setPage] = React.useState(0);
+    const [rowsPerPage, setRowsPerPage] = React.useState(10);
+
+    const handleChangePage = (
+        event: React.MouseEvent<HTMLButtonElement> | null,
+        newPage: number,
+    ) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (
+        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
 
     const handelSearchContact = (event:ChangeEvent<HTMLInputElement>) =>{
         setSearchContact(event.target.value)
@@ -56,6 +73,9 @@ const HomePage = () => {
     }
 
     const filterContactList = filterContacts();
+
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
 
     return (
         <Box>
@@ -113,7 +133,7 @@ const HomePage = () => {
                             )
                         })
                         :
-                            contacts.map((contact,index)=> {
+                            contacts.slice(startIndex,endIndex).map((contact,index)=> {
                                 const contactId = index + 1;
                                 return (
                                     <TableRow key={index}>
@@ -144,6 +164,14 @@ const HomePage = () => {
 
                     </TableBody>
                 </Table>
+                <TablePagination
+                    component="div"
+                    count={contacts.length}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
             </Paper>
             </Box>
             <Modal open={open} onClose={handelClick}>
